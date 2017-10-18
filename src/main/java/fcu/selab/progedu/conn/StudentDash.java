@@ -6,10 +6,10 @@ import java.util.List;
 
 import org.gitlab.api.models.GitlabProject;
 import org.gitlab.api.models.GitlabUser;
+import org.json.JSONObject;
 
 import fcu.selab.progedu.config.JenkinsConfig;
 import fcu.selab.progedu.data.Project;
-import fcu.selab.progedu.data.User;
 import fcu.selab.progedu.db.ProjectDbManager;
 import fcu.selab.progedu.exception.LoadConfigFailureException;
 import fcu.selab.progedu.jenkins.JenkinsApi;
@@ -83,9 +83,10 @@ public class StudentDash {
         String jobApiJson = jobStatus.getJobApiJson();
         boolean isMaven = jenkins.checkProjectIsMvn(jobApiJson);
         String color = jenkins.getJobJsonColor(jobApiJson);
-        String checkstyleDes = jenkins.getCheckstyleDes(jobApiJson);
+        JSONObject checkstyleDes = jenkins.getCheckstyleDes(jobApiJson);
         if (null != checkstyleDes && !"".equals(checkstyleDes)) {
           checkstyleErrorAmount = jenkins.getCheckstyleErrorAmount(checkstyleDes);
+          System.out.println(checkstyleErrorAmount);
         }
         if (checkstyleErrorAmount != 0) {
           color = "orange";
@@ -116,11 +117,14 @@ public class StudentDash {
     }
     return commitCounts;
   }
-  
+
   /**
    * get jenkins job status
-   * @param jobName job's name
-   * @param jobUrl job's jenkins url
+   * 
+   * @param jobName
+   *          job's name
+   * @param jobUrl
+   *          job's jenkins url
    * @return status
    */
   public JobStatus getJobStatus(String jobName, String jobUrl) {
@@ -130,12 +134,14 @@ public class StudentDash {
     jobStatus.setJobApiJson();
     return jobStatus;
   }
-  
+
   /**
    * Get user job status list
    * 
-   * @param projects gitlab project list
-   * @param user user
+   * @param projects
+   *          gitlab project list
+   * @param user
+   *          user
    * @return job status list
    */
   public List<JobStatus> getJobStatusList(List<GitlabProject> projects, GitlabUser user) {
@@ -154,11 +160,12 @@ public class StudentDash {
     }
     return jobStatusList;
   }
-  
+
   /**
    * Get job commit counts
    * 
-   * @param jobStatusis job status
+   * @param jobStatusis
+   *          job status
    * @return commit counts list
    */
   public List<Integer> getJobCommits(List<JobStatus> jobStatusis) {

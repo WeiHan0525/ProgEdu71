@@ -9,7 +9,7 @@
 <%@ page import="fcu.selab.progedu.data.User, fcu.selab.progedu.data.Project" %>   
 <%@ page import="org.gitlab.api.GitlabAPI" %>
 <%@ page import="org.gitlab.api.models.*" %>
-<%@ page import="java.util.*" %>
+<%@ page import="java.util.*, fcu.selab.progedu.conn.Dash" %>
 <%@ page import="fcu.selab.progedu.jenkins.JobStatus" %>
 
 <%
@@ -217,56 +217,21 @@
 										  for(GitlabProject gitProject : gitProjects){
 										    if(dbProject.getName().equals(gitProject.getName())){
 										      commit_count = conn.getAllCommitsCounts(gitProject.getId());
+										      Dash dash = new Dash(choosedUser);
+										      
+										      String color = dash.getMainTableColor(gitProject);
+										      String buildResult = color.replace("color ", "");
+										      
 										      //---Jenkins---
 												String jobName = choosedUser.getUserName() + "_" + gitProject.getName();
-												jobStatus.setName(jobName);
-												String jobUrl = jenkinsData.getJenkinsHostUrl() + "/job/" + jobName + "/api/json";
-												jobStatus.setUrl(jobUrl);
-											  // Get job status
-												jobStatus.setJobApiJson();
-												boolean isMaven = jenkins.checkProjectIsMvn(jobStatus.getJobApiJson());
-												// --- Get job status End ---
-												String color = null;
-												int checkstyleErrorAmount = 0;
+												projectJenkinsUrl = jenkinsData.getJenkinsHostUrl() + "/job/" + jobName;
 												
-												if(null != jobStatus.getJobApiJson()){
-													color = jenkins.getJobJsonColor(jobStatus.getJobApiJson());
-													if(!isMaven){
-													  // Javac
-													  if(color.equals("red")){
-													    // color == red
-													    projectJenkinsUrl = jenkinsData.getJenkinsHostUrl() + "/job/" + jobName + "/lastBuild/consoleText";
-													  }else{
-													    // color != red , gray or blue
-													    projectJenkinsUrl = jenkinsData.getJenkinsHostUrl() + "/job/" + jobName;
-													  }
-													}else{
-													  // Maven
-													  if(color.equals("red")){
-													    projectJenkinsUrl = jenkinsData.getJenkinsHostUrl() + "/job/" + jobName + "/lastBuild/consoleText";
-													 	String checkstyleDes = jenkins.getCheckstyleDes(jobStatus.getJobApiJson());
-														if(null != checkstyleDes && !"".equals(checkstyleDes)){
-														  checkstyleErrorAmount = jenkins.getCheckstyleErrorAmount(checkstyleDes);
-														}
-														if(checkstyleErrorAmount != 0){
-														  color = "orange";
-														  projectJenkinsUrl = jenkinsData.getJenkinsHostUrl() + "/job/" + jobName + "/violations";
-														}
-													  }else{
-													    projectJenkinsUrl = jenkinsData.getJenkinsHostUrl() + "/job/" + jobName;
-													  }
-													}
-													if(commit_count == 1){
-													  circleColor = "circle gray";
-													  projectJenkinsUrl = jenkinsData.getJenkinsHostUrl() + "/job/" + jobName;
-													} else {
-													  	if(color!=null){
-													  	  circleColor = "circle " + color;
-														}else{
-														  circleColor = "circle gray";
-														}
-													}
-													//-------------
+												if(buildResult.equals("red")){
+												    // color == red
+												    projectJenkinsUrl = projectJenkinsUrl + "/lastBuild/consoleText";
+												}
+												if(buildResult.equals("orange")) {
+													projectJenkinsUrl = projectJenkinsUrl + "/violations";
 												}
 										    }else{
 												continue;

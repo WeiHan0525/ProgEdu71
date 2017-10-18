@@ -105,8 +105,7 @@ public class JenkinsApi {
    * @param sb
    *          The config build job command
    */
-  public void createRootJob(String proName, String jenkinsCrumb, String fileType,
-      StringBuilder sb) {
+  public void createRootJob(String proName, String jenkinsCrumb, String fileType, StringBuilder sb) {
 
     // ---Create Jenkins Job---
     String jobName = "root_" + proName;
@@ -132,8 +131,8 @@ public class JenkinsApi {
    * @throws IOException
    *           on gitlab getuser call error
    */
-  public void createJenkinsJob(String userName, String proName, String jenkinsCrumb,
-      String fileType, StringBuilder sb) {
+  public void createJenkinsJob(String userName, String proName, String jenkinsCrumb, String fileType,
+      StringBuilder sb) {
 
     // ---Create Jenkins Job---
     String jobName = userName + "_" + proName;
@@ -156,8 +155,7 @@ public class JenkinsApi {
    * @param sb
    *          The config build job command
    */
-  public void postCreateJob(String jobName, String proUrl, String jenkinsCrumb, String fileType,
-      StringBuilder sb) {
+  public void postCreateJob(String jobName, String proUrl, String jenkinsCrumb, String fileType, StringBuilder sb) {
     HttpClient client = new DefaultHttpClient();
 
     String url = jenkinsRootUrl + "/createItem?name=" + jobName;
@@ -178,8 +176,7 @@ public class JenkinsApi {
       }
 
       StringBuilder sbConfig = getConfig(filePath);
-      StringEntity se = new StringEntity(sbConfig.toString(),
-          ContentType.create("text/xml", Consts.UTF_8));
+      StringEntity se = new StringEntity(sbConfig.toString(), ContentType.create("text/xml", Consts.UTF_8));
       se.setChunked(true);
       post.setEntity(se);
 
@@ -230,8 +227,7 @@ public class JenkinsApi {
         throw new InterruptedException();
       }
 
-      BufferedReader reader = new BufferedReader(
-          new InputStreamReader(conn.getInputStream(), "UTF-8"));
+      BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
       String jsonString = reader.readLine();
       reader.close();
 
@@ -383,8 +379,7 @@ public class JenkinsApi {
    *          jenkins job url
    * @return number list
    */
-  public List<Integer> getJenkinsJobAllBuildNumber(String username, String password,
-      String jobUrl) {
+  public List<Integer> getJenkinsJobAllBuildNumber(String username, String password, String jobUrl) {
     List<Integer> numbers = new ArrayList<Integer>();
     HttpURLConnection conn = null;
     try {
@@ -405,8 +400,7 @@ public class JenkinsApi {
         throw new InterruptedException();
       }
 
-      BufferedReader reader = new BufferedReader(
-          new InputStreamReader(conn.getInputStream(), "UTF-8"));
+      BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
       String jsonString1 = reader.readLine();
       reader.close();
 
@@ -515,8 +509,7 @@ public class JenkinsApi {
       if (Thread.interrupted()) {
         throw new InterruptedException();
       }
-      BufferedReader reader = new BufferedReader(
-          new InputStreamReader(conn.getInputStream(), "UTF-8"));
+      BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
       String jsonString1 = reader.readLine();
       reader.close();
 
@@ -548,8 +541,7 @@ public class JenkinsApi {
     HttpClient client = new DefaultHttpClient();
 
     try {
-      String url = jenkinsData.getJenkinsRootUrl() + "/job/" + jobName
-          + "/doDelete";
+      String url = jenkinsData.getJenkinsRootUrl() + "/job/" + jobName + "/doDelete";
       HttpPost post = new HttpPost(url);
 
       post.addHeader("Content-Type", "application/x-www-form-urlencoded");
@@ -591,8 +583,7 @@ public class JenkinsApi {
       }
       URL url = new URL(strUrl);
       conn = (HttpURLConnection) url.openConnection();
-      String input = jenkinsData.getJenkinsRootUsername()
-          + ":" + jenkinsData.getJenkinsRootPassword();
+      String input = jenkinsData.getJenkinsRootUsername() + ":" + jenkinsData.getJenkinsRootPassword();
       BASE64Encoder enc = new BASE64Encoder();
       String encoding = enc.encode(input.getBytes());
       conn.setRequestProperty("Authorization", "Basic " + encoding);
@@ -656,8 +647,7 @@ public class JenkinsApi {
         throw new InterruptedException();
       }
 
-      BufferedReader reader = new BufferedReader(
-          new InputStreamReader(conn.getInputStream(), "UTF-8"));
+      BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
       String jsonString1 = reader.readLine();
       reader.close();
 
@@ -680,15 +670,15 @@ public class JenkinsApi {
    *          job api json
    * @return description
    */
-  public String getCheckstyleDes(String jobApiJson) {
-    String description = null;
+  public JSONObject getCheckstyleDes(String jobApiJson) {
+    JSONObject jsonCheckstyle = null;
     JSONObject jsonJobApi = new JSONObject(jobApiJson);
     JSONArray jsonHealthReport = jsonJobApi.getJSONArray("healthReport");
     if (jsonHealthReport.length() == 2) {
-      JSONObject jsonCheckstyle = jsonHealthReport.getJSONObject(1);
-      description = jsonCheckstyle.getString("description");
+      jsonCheckstyle = jsonHealthReport.getJSONObject(1);
+      // description = jsonCheckstyle.getString("description");
     }
-    return description;
+    return jsonCheckstyle;
   }
 
   /**
@@ -698,11 +688,14 @@ public class JenkinsApi {
    *          description
    * @return amount
    */
-  public int getCheckstyleErrorAmount(String checkstyleDes) {
-    int errorAmount = 0;
-    String amount = checkstyleDes.substring(checkstyleDes.length() - 1, checkstyleDes.length());
-    errorAmount = Integer.parseInt(amount);
-    return errorAmount;
+  public int getCheckstyleErrorAmount(JSONObject checkstyleDes) {
+    Double errorAmount = checkstyleDes.optDouble("description");
+    int amount = 0;
+    if (errorAmount.isNaN()) {
+      amount = errorAmount.intValue();
+    }
+
+    return amount;
   }
 
   /**
@@ -751,8 +744,7 @@ public class JenkinsApi {
         throw new InterruptedException();
       }
 
-      BufferedReader reader = new BufferedReader(
-          new InputStreamReader(conn.getInputStream(), "UTF-8"));
+      BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
       String jsonString1 = reader.readLine();
       reader.close();
 
