@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.gitlab.api.models.GitlabProject;
 import org.gitlab.api.models.GitlabUser;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import fcu.selab.progedu.config.JenkinsConfig;
@@ -24,6 +25,7 @@ public class StudentDash {
   List<GitlabProject> gitProjects;
   JenkinsConfig jenkinsData = JenkinsConfig.getInstance();
   JenkinsApi jenkins = JenkinsApi.getInstance();
+  JobStatus jobStatus = new JobStatus();
 
   /**
    * Constructor
@@ -175,5 +177,50 @@ public class StudentDash {
       commitCounts.add(count);
     }
     return commitCounts;
+  }
+
+  /**
+   * get student project scm commit count
+   * 
+   * @param userName
+   *          student name
+   * @param gitProject
+   *          gitlab project
+   * @return count
+   */
+  public int getScmCommit(String userName, GitlabProject gitProject) {
+    String jobName = userName + "_" + gitProject.getName();
+    jobStatus.setName(jobName);
+    String jobUrl = "";
+    List<Integer> numbers = new ArrayList<Integer>();
+    String jenkinsHostUrl = "";
+    try {
+      jenkinsHostUrl = jenkinsData.getJenkinsHostUrl();
+      jobUrl = jenkinsHostUrl + "/job/" + jobName + "/api/json";
+      numbers = jenkins.getJenkinsJobAllBuildNumber(jenkinsData.getJenkinsRootUsername(),
+          jenkinsData.getJenkinsRootPassword(), jobUrl);
+    } catch (LoadConfigFailureException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    int commitCount = 0;
+    for (int i : numbers) {
+      jobStatus.setUrl(jenkinsHostUrl + "/job/" + jobName + "/" + i + "/api/json");
+      // Get job status
+      jobStatus.setJobApiJson();
+      String apiJson = jobStatus.getJobApiJson();
+      JSONObject json = new JSONObject(apiJson);
+      JSONArray actions = json.getJSONArray("actions");
+      JSONArray causes = actions.getJSONObject(0).getJSONArray("causes");
+      String shortDescription = causes.getJSONObject(0).optString("shortDescription");
+      if ("Started by an SCM change".equals(shortDescription)) {
+        commitCount++;
+      } else {
+        if (i == 1) { // teacher commit
+          commitCount++;
+        }
+      }
+    }
+    return commitCount;
   }
 }

@@ -105,7 +105,8 @@ public class JenkinsApi {
    * @param sb
    *          The config build job command
    */
-  public void createRootJob(String proName, String jenkinsCrumb, String fileType, StringBuilder sb) {
+  public void createRootJob(String proName, String jenkinsCrumb, String fileType,
+      StringBuilder sb) {
 
     // ---Create Jenkins Job---
     String jobName = "root_" + proName;
@@ -131,8 +132,8 @@ public class JenkinsApi {
    * @throws IOException
    *           on gitlab getuser call error
    */
-  public void createJenkinsJob(String userName, String proName, String jenkinsCrumb, String fileType,
-      StringBuilder sb) {
+  public void createJenkinsJob(String userName, String proName, String jenkinsCrumb,
+      String fileType, StringBuilder sb) {
 
     // ---Create Jenkins Job---
     String jobName = userName + "_" + proName;
@@ -155,7 +156,8 @@ public class JenkinsApi {
    * @param sb
    *          The config build job command
    */
-  public void postCreateJob(String jobName, String proUrl, String jenkinsCrumb, String fileType, StringBuilder sb) {
+  public void postCreateJob(String jobName, String proUrl, String jenkinsCrumb, String fileType,
+      StringBuilder sb) {
     HttpClient client = new DefaultHttpClient();
 
     String url = jenkinsRootUrl + "/createItem?name=" + jobName;
@@ -176,7 +178,8 @@ public class JenkinsApi {
       }
 
       StringBuilder sbConfig = getConfig(filePath);
-      StringEntity se = new StringEntity(sbConfig.toString(), ContentType.create("text/xml", Consts.UTF_8));
+      StringEntity se = new StringEntity(sbConfig.toString(),
+          ContentType.create("text/xml", Consts.UTF_8));
       se.setChunked(true);
       post.setEntity(se);
 
@@ -227,7 +230,8 @@ public class JenkinsApi {
         throw new InterruptedException();
       }
 
-      BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
+      BufferedReader reader = new BufferedReader(
+          new InputStreamReader(conn.getInputStream(), "UTF-8"));
       String jsonString = reader.readLine();
       reader.close();
 
@@ -379,7 +383,8 @@ public class JenkinsApi {
    *          jenkins job url
    * @return number list
    */
-  public List<Integer> getJenkinsJobAllBuildNumber(String username, String password, String jobUrl) {
+  public List<Integer> getJenkinsJobAllBuildNumber(String username, String password,
+      String jobUrl) {
     List<Integer> numbers = new ArrayList<Integer>();
     HttpURLConnection conn = null;
     try {
@@ -400,7 +405,8 @@ public class JenkinsApi {
         throw new InterruptedException();
       }
 
-      BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
+      BufferedReader reader = new BufferedReader(
+          new InputStreamReader(conn.getInputStream(), "UTF-8"));
       String jsonString1 = reader.readLine();
       reader.close();
 
@@ -509,7 +515,8 @@ public class JenkinsApi {
       if (Thread.interrupted()) {
         throw new InterruptedException();
       }
-      BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
+      BufferedReader reader = new BufferedReader(
+          new InputStreamReader(conn.getInputStream(), "UTF-8"));
       String jsonString1 = reader.readLine();
       reader.close();
 
@@ -583,7 +590,8 @@ public class JenkinsApi {
       }
       URL url = new URL(strUrl);
       conn = (HttpURLConnection) url.openConnection();
-      String input = jenkinsData.getJenkinsRootUsername() + ":" + jenkinsData.getJenkinsRootPassword();
+      String input = jenkinsData.getJenkinsRootUsername() + ":"
+          + jenkinsData.getJenkinsRootPassword();
       BASE64Encoder enc = new BASE64Encoder();
       String encoding = enc.encode(input.getBytes());
       conn.setRequestProperty("Authorization", "Basic " + encoding);
@@ -604,6 +612,57 @@ public class JenkinsApi {
       }
       br.close();
       console = sb.toString();
+
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      if (conn != null) {
+        conn.disconnect();
+      }
+    }
+    return console;
+  }
+
+  /**
+   * Get
+   * 
+   * @param strUrl
+   *          strUrl
+   * @return console
+   */
+  public String getConsoleTextCommitMessage(String strUrl) {
+    String console = "";
+    HttpURLConnection conn = null;
+
+    try {
+      if (Thread.interrupted()) {
+        throw new InterruptedException();
+      }
+      URL url = new URL(strUrl);
+      conn = (HttpURLConnection) url.openConnection();
+      String input = jenkinsData.getJenkinsRootUsername() + ":"
+          + jenkinsData.getJenkinsRootPassword();
+      BASE64Encoder enc = new BASE64Encoder();
+      String encoding = enc.encode(input.getBytes());
+      conn.setRequestProperty("Authorization", "Basic " + encoding);
+      conn.setReadTimeout(10000);
+      conn.setConnectTimeout(15000);
+      conn.setRequestMethod("GET");
+      conn.connect();
+      if (Thread.interrupted()) {
+        throw new InterruptedException();
+      }
+
+      BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
+      String str = "";
+      StringBuffer sb = new StringBuffer();
+      while (null != ((str = br.readLine()))) {
+        if (str.contains("Commit message:")) {
+          console = str;
+          break;
+        }
+      }
+      br.close();
 
     } catch (Exception e) {
       e.printStackTrace();
@@ -647,7 +706,8 @@ public class JenkinsApi {
         throw new InterruptedException();
       }
 
-      BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
+      BufferedReader reader = new BufferedReader(
+          new InputStreamReader(conn.getInputStream(), "UTF-8"));
       String jsonString1 = reader.readLine();
       reader.close();
 
@@ -689,12 +749,64 @@ public class JenkinsApi {
    * @return amount
    */
   public int getCheckstyleErrorAmount(JSONObject checkstyleDes) {
-    Double errorAmount = checkstyleDes.optDouble("description");
+    String description = checkstyleDes.optString("description");
     int amount = 0;
-    if (errorAmount.isNaN()) {
-      amount = errorAmount.intValue();
+    String num = description.substring(description.length() - 1, description.length());
+    int index = 0;
+    switch (num) {
+      case "0":
+        index = description.indexOf("is") + 3;
+        num = description.substring(index, description.length());
+        amount = Integer.valueOf(num);
+        break;
+      case "1":
+        index = description.indexOf("is") + 3;
+        num = description.substring(index, description.length());
+        amount = Integer.valueOf(num);
+        break;
+      case "2":
+        index = description.indexOf("is") + 3;
+        num = description.substring(index, description.length());
+        amount = Integer.valueOf(num);
+        break;
+      case "3":
+        index = description.indexOf("is") + 3;
+        num = description.substring(index, description.length());
+        amount = Integer.valueOf(num);
+        break;
+      case "4":
+        index = description.indexOf("is") + 3;
+        num = description.substring(index, description.length());
+        amount = Integer.valueOf(num);
+        break;
+      case "5":
+        index = description.indexOf("is") + 3;
+        num = description.substring(index, description.length());
+        amount = Integer.valueOf(num);
+        break;
+      case "6":
+        index = description.indexOf("is") + 3;
+        num = description.substring(index, description.length());
+        amount = Integer.valueOf(num);
+        break;
+      case "7":
+        index = description.indexOf("is") + 3;
+        num = description.substring(index, description.length());
+        amount = Integer.valueOf(num);
+        break;
+      case "8":
+        index = description.indexOf("is") + 3;
+        num = description.substring(index, description.length());
+        amount = Integer.valueOf(num);
+        break;
+      case "9":
+        index = description.indexOf("is") + 3;
+        num = description.substring(index, description.length());
+        amount = Integer.valueOf(num);
+        break;
+      default:
+        break;
     }
-
     return amount;
   }
 
@@ -744,7 +856,8 @@ public class JenkinsApi {
         throw new InterruptedException();
       }
 
-      BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
+      BufferedReader reader = new BufferedReader(
+          new InputStreamReader(conn.getInputStream(), "UTF-8"));
       String jsonString1 = reader.readLine();
       reader.close();
 

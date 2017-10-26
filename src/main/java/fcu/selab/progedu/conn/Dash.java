@@ -1,8 +1,10 @@
 package fcu.selab.progedu.conn;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.gitlab.api.models.GitlabProject;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import fcu.selab.progedu.config.JenkinsConfig;
@@ -51,7 +53,7 @@ public class Dash {
     jobStatus.setJobApiJson();
     String apiJson = jobStatus.getJobApiJson();
     boolean isMaven = jenkins.checkProjectIsMvn(apiJson);
-    int commitCount = jenkins.getJobBuildCommit(apiJson);
+    int commitCount = getProjectCommitCount(gitProject);
 
     String color = null;
     int checkstyleErrorAmount = 0;
@@ -61,6 +63,7 @@ public class Dash {
         if (color.equals("red")) {
           JSONObject checkstyleDes = jenkins.getCheckstyleDes(apiJson);
           checkstyleErrorAmount = jenkins.getCheckstyleErrorAmount(checkstyleDes);
+          System.out.println(checkstyleErrorAmount);
           if (checkstyleErrorAmount != 0) {
             color = "orange";
           }
@@ -89,22 +92,56 @@ public class Dash {
    * @return commit count
    */
   public int getProjectCommitCount(GitlabProject gitProject) {
+    // // ---Jenkins---
+    // String jobName = user.getUserName() + "_" + gitProject.getName();
+    // jobStatus.setName(jobName);
+    // String jobUrl = "";
+    // try {
+    // jobUrl = jenkinsData.getJenkinsHostUrl() + "/job/" + jobName;
+    // } catch (LoadConfigFailureException e) {
+    // // TODO Auto-generated catch block
+    // e.printStackTrace();
+    // }
+    // jobStatus.setUrl(jobUrl + "/api/json");
+    //
+    // // Get job status
+    // jobStatus.setJobApiJson();
+    // String apiJson = jobStatus.getJobApiJson();
+    // int commitCount = jenkins.getJobBuildCommit(apiJson);
+    // return commitCount;
     // ---Jenkins---
     String jobName = user.getUserName() + "_" + gitProject.getName();
     jobStatus.setName(jobName);
     String jobUrl = "";
+    List<Integer> numbers = new ArrayList<Integer>();
+    String jenkinsHostUrl = "";
     try {
-      jobUrl = jenkinsData.getJenkinsHostUrl() + "/job/" + jobName;
+      jenkinsHostUrl = jenkinsData.getJenkinsHostUrl();
+      jobUrl = jenkinsHostUrl + "/job/" + jobName + "/api/json";
+      numbers = jenkins.getJenkinsJobAllBuildNumber(jenkinsData.getJenkinsRootUsername(),
+          jenkinsData.getJenkinsRootPassword(), jobUrl);
     } catch (LoadConfigFailureException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
-    jobStatus.setUrl(jobUrl + "/api/json");
-
-    // Get job status
-    jobStatus.setJobApiJson();
-    String apiJson = jobStatus.getJobApiJson();
-    int commitCount = jenkins.getJobBuildCommit(apiJson);
+    int commitCount = 0;
+    for (int i : numbers) {
+      jobStatus.setUrl(jenkinsHostUrl + "/job/" + jobName + "/" + i + "/api/json");
+      // Get job status
+      jobStatus.setJobApiJson();
+      String apiJson = jobStatus.getJobApiJson();
+      JSONObject json = new JSONObject(apiJson);
+      JSONArray actions = json.getJSONArray("actions");
+      JSONArray causes = actions.getJSONObject(0).getJSONArray("causes");
+      String shortDescription = causes.getJSONObject(0).optString("shortDescription");
+      if ("Started by an SCM change".equals(shortDescription)) {
+        commitCount++;
+      } else {
+        if (i == 1) { // teacher commit
+          commitCount++;
+        }
+      }
+    }
     return commitCount;
   }
 
