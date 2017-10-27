@@ -88,7 +88,6 @@ public class StudentDash {
         JSONObject checkstyleDes = jenkins.getCheckstyleDes(jobApiJson);
         if (null != checkstyleDes && !"".equals(checkstyleDes)) {
           checkstyleErrorAmount = jenkins.getCheckstyleErrorAmount(checkstyleDes);
-          System.out.println(checkstyleErrorAmount);
         }
         if (checkstyleErrorAmount != 0) {
           color = "orange";

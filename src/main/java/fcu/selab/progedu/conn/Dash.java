@@ -63,7 +63,6 @@ public class Dash {
         if (color.equals("red")) {
           JSONObject checkstyleDes = jenkins.getCheckstyleDes(apiJson);
           checkstyleErrorAmount = jenkins.getCheckstyleErrorAmount(checkstyleDes);
-          System.out.println(checkstyleErrorAmount);
           if (checkstyleErrorAmount != 0) {
             color = "orange";
           }
